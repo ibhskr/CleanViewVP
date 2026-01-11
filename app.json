@@ -12,6 +12,13 @@
       "supportsTablet": true
     },
     "android": {
+      "permissions": [
+        "READ_MEDIA_VIDEO",
+        "READ_MEDIA_AUDIO",
+        "READ_MEDIA_VIDEO",
+        "READ_MEDIA_AUDIO",
+        "READ_EXTERNAL_STORAGE"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -19,13 +26,21 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.i.bhskr.cleanViewVP"
     },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
@@ -38,7 +53,9 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-video",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
