@@ -3,12 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { useEffect, useRef, useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 function formatTime(sec: number) {
   const m = Math.floor(sec / 60);
@@ -17,12 +12,19 @@ function formatTime(sec: number) {
 }
 
 export default function PlayerScreen() {
-  const { uri } = useLocalSearchParams<{ uri: string }>();
+  // Change 'uri' to 'id' here
+  const { id } = useLocalSearchParams<{ id: string }>();
 
-  const player = useVideoPlayer(uri!, (p) => {
-    p.loop = false;
+  // Now console.log will show your video path
+  // console.log("Video URI:", id);
+
+  const player = useVideoPlayer(id, (p) => {
     p.play();
   });
+  // const player = useVideoPlayer(uri!, (p) => {
+  //   p.loop = false;
+  //   p.play();
+  // });
 
   const [playing, setPlaying] = useState(true);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -30,7 +32,8 @@ export default function PlayerScreen() {
   const [locked, setLocked] = useState(false);
   const [loop, setLoop] = useState(false);
   const [bgPlay, setBgPlay] = useState(false);
-  const [fit, setFit] = useState<"contain" | "cover">("contain");
+  // Professional TypeScript Union Type
+  const [fit, setFit] = useState<"contain" | "cover" | "fill">("contain");
   const [speed, setSpeed] = useState(1);
   const [rotated, setRotated] = useState(false);
 
@@ -48,15 +51,14 @@ export default function PlayerScreen() {
     return () => sub.remove();
   }, []);
 
-  // Auto hide controls
+  // Auto-hide controls
   useEffect(() => {
-    if (!controlsVisible || locked) return;
+    if (!controlsVisible || locked || drawerOpen) return;
     hideTimer.current && clearTimeout(hideTimer.current);
     hideTimer.current = setTimeout(() => {
       setControlsVisible(false);
-      setDrawerOpen(false);
     }, 3000);
-  }, [controlsVisible, locked]);
+  }, [controlsVisible, locked, drawerOpen]);
 
   useEffect(() => {
     return () => {
@@ -111,8 +113,8 @@ export default function PlayerScreen() {
         player={player}
         style={styles.video}
         contentFit={fit}
-        allowsFullscreen
         allowsPictureInPicture={bgPlay}
+        nativeControls={false} // 🔥 CRITICAL FIX
       />
 
       {controlsVisible && (
@@ -128,8 +130,8 @@ export default function PlayerScreen() {
             </Pressable>
           </View>
 
-          {/* CENTER CONTROLS */}
-          {!locked && (
+          {/* CENTER CONTROLS (hidden when drawer open or locked) */}
+          {!locked && !drawerOpen && (
             <View style={styles.centerControls}>
               <Pressable onPress={() => seekBy(-10)}>
                 <Ionicons name="play-back" size={36} color="#fff" />
@@ -160,7 +162,7 @@ export default function PlayerScreen() {
             </Pressable>
           </View>
 
-          {/* 🔽 BOTTOM DRAWER */}
+          {/* BOTTOM DRAWER */}
           {drawerOpen && (
             <View style={styles.drawer}>
               <DrawerItem
@@ -175,11 +177,23 @@ export default function PlayerScreen() {
                 onPress={toggleLoop}
               />
               <DrawerItem
-                icon="resize"
-                label="Fit"
-                onPress={() =>
-                  setFit((v) => (v === "contain" ? "cover" : "contain"))
+                icon={
+                  fit === "contain"
+                    ? "contract"
+                    : fit === "cover"
+                    ? "scan"
+                    : "expand"
                 }
+                label={`Fit: ${fit.charAt(0).toUpperCase() + fit.slice(1)}`}
+                active={fit !== "contain"} // Highlights if not default
+                onPress={() => {
+                  setFit((prev) => {
+                    if (prev === "contain") return "cover";
+                    if (prev === "cover") return "fill";
+                    return "contain";
+                  });
+                  // Optional: showFitIndicator();
+                }}
               />
               <DrawerItem
                 icon="phone-landscape"
@@ -218,11 +232,7 @@ function DrawerItem({
 }) {
   return (
     <Pressable style={styles.drawerItem} onPress={onPress}>
-      <Ionicons
-        name={icon}
-        size={22}
-        color={active ? "#2dd4bf" : "#fff"}
-      />
+      <Ionicons name={icon} size={22} color={active ? "#2dd4bf" : "#fff"} />
       <Text style={styles.drawerText}>{label}</Text>
     </Pressable>
   );
@@ -259,7 +269,7 @@ const styles = StyleSheet.create({
   },
 
   drawer: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "#0f172a64",
     paddingVertical: 14,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
